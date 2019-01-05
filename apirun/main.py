@@ -49,7 +49,7 @@ def parse_options():
         action='store',
         type='str',
         dest='report',
-        default='report\\',
+        default='report',
         help="Store the reports.",
     )
 
@@ -186,7 +186,7 @@ def main():
 
     if options.make_demo:
         pwd = os.getcwd()
-        demo_path = os.path.join(get_apirun_path(), 'demo\\demo_testcase.xls')
+        demo_path = os.path.join(get_apirun_path(), 'demo', 'demo_testcase.xls')
         new_demo = os.path.join(pwd, 'demo.xls')
         shutil.copyfile(demo_path, new_demo)
         sys.exit(0)
@@ -195,9 +195,9 @@ def main():
         global report_dir
         report_dir = options.report
         try:
-            os.makedirs(report_dir + '\\js')
-            js_file = os.path.join(get_apirun_path(), 'js\\echarts.common.min.js')
-            shutil.copyfile(js_file, report_dir + '\\js\\echarts.common.min.js')
+            os.makedirs(os.path.join(report_dir, 'js'))
+            js_file = os.path.join(get_apirun_path(), 'js', 'echarts.common.min.js')
+            shutil.copyfile(js_file, os.path.join(report_dir + 'js', 'echarts.common.min.js'))
         except FileExistsError:
             pass
 

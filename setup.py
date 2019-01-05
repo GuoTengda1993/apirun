@@ -18,7 +18,7 @@ setup(
     description="API testing framework",
     long_description="""APIRun is a python utility for doing easy API test.""",
     classifiers=[
-        "Topic :: API test",
+        "Topic :: Software Development :: Testing :: Traffic Generation",
         "Development Status :: 1 - Beta",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
