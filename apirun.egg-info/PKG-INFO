@@ -1,0 +1,21 @@
+Metadata-Version: 1.1
+Name: apirun
+Version: 0.1.0
+Summary: API testing framework
+Home-page: UNKNOWN
+Author: Guo Tengda
+Author-email: UNKNOWN
+License: MIT
+Description: APIRun is a python utility for doing easy API test.
+Platform: UNKNOWN
+Classifier: Topic :: API test
+Classifier: Development Status :: 1 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
