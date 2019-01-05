@@ -18,7 +18,5 @@ Open Console, type `apirun --help`, you will see some parameters
 >>Show the version.
 
 ## Pending
-* Support Linux platform
 * More api test situations
 * Easy and better installation
-* Upload to PyPI
