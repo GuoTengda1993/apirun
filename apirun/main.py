@@ -193,7 +193,7 @@ def main():
         apirun_path = get_apirun_path()
         if not apirun_path:
             logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
-            if linux make sure python is installed in /usr/local/bin/''')
+            if linux make sure python is installed in /usr/local/lib/''')
             sys.exit(1)
         demo_path = os.path.join(apirun_path, 'demo', 'demo_testcase.xls')
         new_demo = os.path.join(pwd, 'demo.xls')
@@ -206,12 +206,12 @@ def main():
         apirun_path = get_apirun_path()
         if not apirun_path:
             logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
-            if linux make sure python is installed in /usr/local/bin/''')
+            if linux make sure python is installed in /usr/local/lib/''')
             sys.exit(1)
         try:
             os.makedirs(os.path.join(report_dir, 'js'))
             js_file = os.path.join(apirun_path, 'js', 'echarts.common.min.js')
-            shutil.copyfile(js_file, os.path.join(report_dir + 'js', 'echarts.common.min.js'))
+            shutil.copyfile(js_file, os.path.join(report_dir, 'js', 'echarts.common.min.js'))
         except FileExistsError:
             pass
 
