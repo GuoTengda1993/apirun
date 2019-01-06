@@ -86,22 +86,26 @@ def run_test(title, filename, report_path, description, testcase):
 
 
 def get_apirun_path():
-    python3_path = os.getenv('PYTHON')
-    if not python3_path:
-        python3_path = os.getenv('PYTHON3')
-    if python3_path:
-        if 'python3' in python3_path.lower():
-            if 'scripts' in python3_path.lower():
-                apirun_path = os.path.join(os.path.dirname(os.path.dirname(python3_path)), 'Lib\\site-packages\\apirun\\')
-            else:
-                apirun_path = os.path.join(python3_path, 'Lib\\site-packages\\apirun\\')
-    else:
-        sys_path = os.getenv('path').split(';')
-        for each in sys_path:
-            if 'python3' in each.lower() and 'scripts' not in each.lower():
-                python3_path = each
-                break
-        apirun_path = os.path.join(python3_path, 'Lib\\site-packages\\apirun\\')
+    if 'win' in sys.platform:
+        python3_path = os.getenv('PYTHON')
+        if not python3_path:
+            python3_path = os.getenv('PYTHON3')
+        if python3_path:
+            if 'python3' in python3_path.lower():
+                if 'scripts' in python3_path.lower():
+                    apirun_path = os.path.join(os.path.dirname(os.path.dirname(python3_path)), 'Lib\\site-packages\\apirun\\')
+                else:
+                    apirun_path = os.path.join(python3_path, 'Lib\\site-packages\\apirun\\')
+        else:
+            sys_path = os.getenv('path').split(';')
+            for each in sys_path:
+                if 'python3' in each.lower() and 'scripts' not in each.lower():
+                    python3_path = each
+                    break
+            apirun_path = os.path.join(python3_path, 'Lib\\site-packages\\apirun\\')
+    elif 'linux' in sys.platform:
+        with os.popen('find /usr/local/bin/ -name apirun') as lp:
+            apirun_path = lp.read()
     return apirun_path
 
 
@@ -186,7 +190,12 @@ def main():
 
     if options.make_demo:
         pwd = os.getcwd()
-        demo_path = os.path.join(get_apirun_path(), 'demo', 'demo_testcase.xls')
+        apirun_path = get_apirun_path()
+        if not apirun_path:
+            logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
+            if linux make sure python is installed in /usr/local/bin/''')
+            sys.exit(1)
+        demo_path = os.path.join(apirun_path, 'demo', 'demo_testcase.xls')
         new_demo = os.path.join(pwd, 'demo.xls')
         shutil.copyfile(demo_path, new_demo)
         sys.exit(0)
@@ -194,9 +203,14 @@ def main():
     if options.report:
         global report_dir
         report_dir = options.report
+        apirun_path = get_apirun_path()
+        if not apirun_path:
+            logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
+            if linux make sure python is installed in /usr/local/bin/''')
+            sys.exit(1)
         try:
             os.makedirs(os.path.join(report_dir, 'js'))
-            js_file = os.path.join(get_apirun_path(), 'js', 'echarts.common.min.js')
+            js_file = os.path.join(apirun_path, 'js', 'echarts.common.min.js')
             shutil.copyfile(js_file, os.path.join(report_dir + 'js', 'echarts.common.min.js'))
         except FileExistsError:
             pass
