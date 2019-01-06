@@ -104,8 +104,8 @@ def get_apirun_path():
                     break
             apirun_path = os.path.join(python3_path, 'Lib\\site-packages\\apirun\\')
     elif 'linux' in sys.platform:
-        with os.popen('find /usr/local/bin/ -name apirun') as lp:
-            apirun_path = lp.read()
+        with os.popen('find /usr/local/ -name apirun -type d') as lp:
+            apirun_path = lp.read().strip()
     return apirun_path
 
 
