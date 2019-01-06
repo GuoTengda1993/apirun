@@ -1,5 +1,6 @@
 MANIFEST.in
 README
+README.md
 setup.cfg
 setup.py
 apirun/HTMLTestRunner_Modified.py

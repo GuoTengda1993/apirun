@@ -19,4 +19,3 @@ Open Console, type `apirun --help`, you will see some parameters
 
 ## Pending
 * More api test situations
-* Easy and better installation

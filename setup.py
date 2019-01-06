@@ -11,6 +11,7 @@ _init_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "apirun", 
 with open(_init_file, 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
+filepath = 'README.md'
 
 setup(
     name='apirun',
@@ -18,7 +19,7 @@ setup(
     description="API testing framework",
     long_description="""APIRun is a python utility for doing easy API test.""",
     classifiers=[
-        "Topic :: Software Development :: Testing :: Traffic Generation",
+        "Topic :: Software Development :: Testing",
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -32,7 +33,7 @@ setup(
     ],
     keywords='',
     author='Guo Tengda',
-    author_email='',
+    author_email='ttguotengda@foxmail.com',
     url='',
     license='MIT',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
@@ -46,4 +47,5 @@ setup(
             'apirun = apirun.main:main',
         ]
     },
+    data_files=[filepath]
 )
