@@ -8,6 +8,7 @@ from optparse import OptionParser
 import ddt
 import requests
 import json
+from json import JSONDecodeError
 import apirun
 
 from .genReport import html_report
@@ -119,6 +120,7 @@ def start_test(testcasefile):
     testcase_data = HandleExcel(testcasefile)
 
     token_url, token_body, token_para, token_locate = testcase_data.auth_info()
+    token_body = str_to_json(token_body)
     token = get_token(token_url, token_body, token_locate)
     global headers
     headers[token_para] = token
@@ -146,6 +148,8 @@ def start_test(testcasefile):
                 query = str_to_json(query)
             if request_data:
                 request_body = str_to_json(request_data)
+            else:
+                request_body = None
             exp_status_code = int(expect_status)
 
             headers = self.headers
@@ -171,6 +175,11 @@ def start_test(testcasefile):
                     print('Actual response: {}'.format(act_response))
                     self.assertIn(expect_str, str(act_response), msg='expect str exist')
             else:
+                try:
+                    act_response = response_actual.json()
+                    print('Actual response: {}'.format(act_response))
+                except JSONDecodeError:
+                    print('No json response.')
                 self.fail('Test FAIL: Status code is different!')
 
     report_filename = testcasefile.replace('\\', '-')
