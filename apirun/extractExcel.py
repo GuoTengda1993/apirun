@@ -77,10 +77,13 @@ class HandleExcel:
 
 
 if __name__ == '__main__':
-    test = HandleExcel('demo_testcase.xls')
+    test = HandleExcel('E:\\Temp\\demo2.xls')
     t = test.testcase_list()
-    print(t)
+    for each in t:
+        print(each)
     url = test.url_parameter()
     print(url)
-    a, b, c = test.auth_info()
-    print(a, b, c)
+    req = test.request_parameter()
+    print(req)
+    a, b, c, d = test.auth_info()
+    print(a, b, c, d)

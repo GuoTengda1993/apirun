@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: apirun
-Version: 0.1.5
+Version: 0.1.6
 Summary: API testing framework
-Home-page: UNKNOWN
+Home-page: https://github.com/GuoTengda1993/apirun
 Author: Guo Tengda
 Author-email: ttguotengda@foxmail.com
 License: MIT
