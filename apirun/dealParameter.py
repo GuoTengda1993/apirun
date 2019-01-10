@@ -6,6 +6,7 @@ import re
 def deal_parameter(string, para):
     paras = re.findall('.*?\$\$(.*?)\$\$', string)  # 正则表达式匹配存在“/{***}”字段的网址
     if paras:
+        real_string = string
         for each in paras:
             real_string = string.replace('$$'+each+'$$', para[each])
     else:

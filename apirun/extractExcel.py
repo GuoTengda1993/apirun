@@ -44,6 +44,7 @@ class HandleExcel:
             url = deal_parameter(url, url_para)
             if ('http://' or 'https://') not in url:
                 url = url_para['BASE_URL'] + url
+            url = url.strip()
 
             auth = testcase_sheet.cell_value(i, 2)
             method = testcase_sheet.cell_value(i, 3)

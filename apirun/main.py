@@ -253,13 +253,16 @@ def main():
         testcase_file_list = []
         for each in files:
             if each.endswith('.xls'):
-                testcase_file_list.append(each)
+                testcase_file_list.append(os.path.join(testcase_folder, each))
         if len(testcase_file_list) == 0:
             logger.error('There is no testcase file in Testcasefolder.')
             sys.exit(1)
         for testcasefile in testcase_file_list:
             t = Thread(target=start_test, args=(testcasefile,))
+            print(t)
+            print(testcasefile)
             t.start()
+            t.join()
 
 
 if __name__ == '__main__':
