@@ -16,7 +16,7 @@ from .getToken import get_token
 from .extractExcel import HandleExcel
 
 
-# _internals = [Locust, HttpLocust]
+logger = logging.getLogger(__name__)
 version = apirun.__version__
 report_dir = ''
 headers = {"Content-Type": "application/json"}
@@ -121,7 +121,14 @@ def start_test(testcasefile):
 
     token_url, token_body, token_para, token_locate = testcase_data.auth_info()
     token_body = str_to_json(token_body)
-    token = get_token(token_url, token_body, token_locate)
+    try:
+        token = get_token(token_url, token_body, token_locate)
+    except KeyError:
+        logger.error('Please check your auth info, cannot get correct response.')
+        sys.exit(1)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
     global headers
     headers[token_para] = token
 
@@ -143,7 +150,7 @@ def start_test(testcasefile):
         @ddt.unpack
         def test_api(self, title, url, auth, method, query, request_data, expect_status, expect_str):
             print('用例标题：' + title + 'END')  # 死活别删这一段，正则匹配这段内容，将标题添加到HTML报告中
-            method = method.lower()
+            method = method.upper()
             if query:
                 query = str_to_json(query)
             if request_data:
@@ -156,16 +163,22 @@ def start_test(testcasefile):
             if auth is False:
                 headers = {"Content-Type": "application/json"}
 
-            if method == 'get':  # GET
+            if method == 'GET':  # GET
                 response_actual = requests.get(url=url, headers=headers, params=query)
-            elif method == 'post':  # POST
+            elif method == 'POST':  # POST
                 response_actual = requests.post(url=url, headers=headers, json=request_body, params=query)
-            elif method == 'delete':  # DELETE
+            elif method == 'DELETE':  # DELETE
                 response_actual = requests.delete(url=url, headers=headers, params=query)
-            elif method == 'put':  # PUT
-                response_actual = requests.put(url=url, headers=headers, params=query)
-            elif method == 'patch':  # patch
+            elif method == 'PUT':  # PUT
+                response_actual = requests.put(url=url, headers=headers, params=query, json=request_body)
+            elif method == 'PATCH':  # patch
                 response_actual = requests.patch(url=url, headers=headers, params=query, json=request_body)
+            elif method == 'HEAD':
+                response_actual = requests.head(url=url, headers=headers, params=query)
+            elif method == 'OPTIONS':
+                response_actual = requests.options(url=url, headers=headers, params=query)
+            else:  # Other method, such as TRACE
+                response_actual = requests.request(method=method, url=url, headers=headers, params=query, json=request_body)
 
             actual_status_code = int(response_actual.status_code)
             if actual_status_code == exp_status_code:
@@ -173,14 +186,23 @@ def start_test(testcasefile):
                 if expect_str:
                     act_response = response_actual.json()
                     print('Actual response: {}'.format(act_response))
-                    self.assertIn(expect_str, str(act_response), msg='expect str exist')
+                    if ';' and '；' not in expect_str:
+                        self.assertIn(expect_str, str(act_response), msg='{} is not in response'.format(expect_str))
+                    else:
+                        if ';' in expect_str:
+                            expect_str_list = expect_str.split(';')
+                        else:
+                            expect_str_list = expect_str.split('；')
+                        for each_str in expect_str_list:
+                            self.assertIn(each_str, str(act_response), msg='{} is not in response'.format(each_str))
             else:
                 try:
                     act_response = response_actual.json()
                     print('Actual response: {}'.format(act_response))
                 except JSONDecodeError:
-                    print('No json response.')
-                self.fail('Test FAIL: Status code is different!')
+                    act_response = response_actual.text
+                    print('Not json response: {}'.format(act_response))
+                self.fail('Status code is different! Actual code is {}'.format(actual_status_code))
 
     report_filename = testcasefile.replace('\\', '-')
     run_test(title=report_title, filename=report_filename, report_path=report_dir, description=report_description,
@@ -191,8 +213,8 @@ def main():
     parser, options, arguments = parse_options()
 
     # setup logging
-    logger = logging.getLogger(__name__)
-    
+    # logger = logging.getLogger(__name__)
+
     if options.show_version:
         print("Apirun %s" % (version,))
         sys.exit(0)
@@ -260,7 +282,7 @@ def main():
         for testcasefile in testcase_file_list:
             t = Thread(target=start_test, args=(testcasefile,))
             print(t)
-            print(testcasefile)
+            print('_-_-_-_- ' + testcasefile)
             t.start()
             t.join()
 
