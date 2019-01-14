@@ -42,7 +42,7 @@ def parse_options():
         '-F', '--testcasefolder',
         dest='testcasefolder',
         help="all testcase in the foler to run.",
-        default=None
+        default=""
     )
 
     parser.add_option(
@@ -184,8 +184,13 @@ def start_test(testcasefile):
             if actual_status_code == exp_status_code:
                 print('Status code is same: {sc}'.format(sc=actual_status_code))
                 if expect_str:
+                    expect_str = expect_str.strip()
                     act_response = response_actual.json()
                     print('Actual response: {}'.format(act_response))
+                    if expect_str.endswith(';'):
+                        expect_str = expect_str.strip(';')
+                    if expect_str.endswith('；'):
+                        expect_str = expect_str.strip('；')
                     if ';' and '；' not in expect_str:
                         self.assertIn(expect_str, str(act_response), msg='{} is not in response'.format(expect_str))
                     else:
@@ -194,6 +199,7 @@ def start_test(testcasefile):
                         else:
                             expect_str_list = expect_str.split('；')
                         for each_str in expect_str_list:
+                            each_str = each_str.strip()
                             self.assertIn(each_str, str(act_response), msg='{} is not in response'.format(each_str))
             else:
                 try:
@@ -282,7 +288,7 @@ def main():
         for testcasefile in testcase_file_list:
             t = Thread(target=start_test, args=(testcasefile,))
             print(t)
-            print('_-_-_-_- ' + testcasefile)
+            print('+++++++++++++++ ' + testcasefile)
             t.start()
             t.join()
 
