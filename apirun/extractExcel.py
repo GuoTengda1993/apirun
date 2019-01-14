@@ -48,7 +48,9 @@ class HandleExcel:
 
             auth = testcase_sheet.cell_value(i, 2)
             method = testcase_sheet.cell_value(i, 3)
+
             query = testcase_sheet.cell_value(i, 4)
+            query = deal_parameter(query, url_para)
 
             request_data = testcase_sheet.cell_value(i, 5)
             req_para = self.request_parameter()

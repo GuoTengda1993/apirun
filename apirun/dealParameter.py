@@ -8,7 +8,7 @@ def deal_parameter(string, para):
     if paras:
         real_string = string
         for each in paras:
-            real_string = string.replace('$$'+each+'$$', para[each])
+            real_string = real_string.replace('$$'+each+'$$', para[each])
     else:
         real_string = string
     return real_string
