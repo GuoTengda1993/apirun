@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 from threading import Thread
+from threading import Lock
 import unittest
 from optparse import OptionParser
 import ddt
@@ -20,6 +21,31 @@ logger = logging.getLogger(__name__)
 version = apirun.__version__
 report_dir = ''
 headers = {"Content-Type": "application/json"}
+_success = 0
+_failure = 0
+_error = 0
+_count_lock = Lock()
+
+
+def add_success(num_s):
+    global _success
+    _count_lock.acquire()
+    _success += num_s
+    _count_lock.release()
+
+
+def add_failure(num_f):
+    global _failure
+    _count_lock.acquire()
+    _failure += num_f
+    _count_lock.release()
+
+
+def add_error(num_e):
+    global _error
+    _count_lock.acquire()
+    _error += num_e
+    _count_lock.release()
 
 
 def parse_options():
@@ -82,8 +108,14 @@ def run_test(title, filename, report_path, description, testcase):
     test = unittest.TestLoader().loadTestsFromTestCase(testcase)
     suit = unittest.TestSuite([test])
     runner, fp = html_report(title=title, filename=filename, report_path=report_path, description=description)
-    runner.run(suit)
+    results = runner.run(suit)
     fp.close()
+    e = results.error_count
+    f = results.failure_count
+    s = results.success_count
+    add_success(s)
+    add_failure(f)
+    add_error(e)
 
 
 def get_apirun_path():
@@ -159,26 +191,26 @@ def start_test(testcasefile):
                 request_body = None
             exp_status_code = int(expect_status)
 
-            headers = self.headers
-            if auth is False:
-                headers = {"Content-Type": "application/json"}
+            _headers = self.headers
+            if auth == 'FALSE':
+                _headers = {"Content-Type": "application/json"}
 
             if method == 'GET':  # GET
-                response_actual = requests.get(url=url, headers=headers, params=query)
+                response_actual = requests.get(url=url, headers=_headers, params=query)
             elif method == 'POST':  # POST
-                response_actual = requests.post(url=url, headers=headers, json=request_body, params=query)
+                response_actual = requests.post(url=url, headers=_headers, json=request_body, params=query)
             elif method == 'DELETE':  # DELETE
-                response_actual = requests.delete(url=url, headers=headers, params=query)
+                response_actual = requests.delete(url=url, headers=_headers, params=query)
             elif method == 'PUT':  # PUT
-                response_actual = requests.put(url=url, headers=headers, params=query, json=request_body)
+                response_actual = requests.put(url=url, headers=_headers, params=query, json=request_body)
             elif method == 'PATCH':  # patch
-                response_actual = requests.patch(url=url, headers=headers, params=query, json=request_body)
+                response_actual = requests.patch(url=url, headers=_headers, params=query, json=request_body)
             elif method == 'HEAD':
-                response_actual = requests.head(url=url, headers=headers, params=query)
+                response_actual = requests.head(url=url, headers=_headers, params=query)
             elif method == 'OPTIONS':
-                response_actual = requests.options(url=url, headers=headers, params=query)
+                response_actual = requests.options(url=url, headers=_headers, params=query)
             else:  # Other method, such as TRACE
-                response_actual = requests.request(method=method, url=url, headers=headers, params=query, json=request_body)
+                response_actual = requests.request(method=method, url=url, headers=_headers, params=query, json=request_body)
 
             actual_status_code = int(response_actual.status_code)
             if actual_status_code == exp_status_code:
@@ -291,6 +323,15 @@ def main():
             print('+++++++++++++++ ' + testcasefile)
             t.start()
             t.join()
+
+    print('==================')
+    print('''
+    Results:
+    Total: {t}
+    Success: {s}
+    Failure: {f}
+    Error: {e}
+    '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error))
 
 
 if __name__ == '__main__':
