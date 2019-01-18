@@ -8,6 +8,7 @@ import unittest
 from optparse import OptionParser
 import ddt
 import requests
+from requests.packages import urllib3
 import json
 from json import JSONDecodeError
 import apirun
@@ -15,8 +16,10 @@ import apirun
 from .genReport import html_report
 from .getToken import get_token
 from .extractExcel import HandleExcel
+from .mail import *
 
 
+urllib3.disable_warnings()
 logger = logging.getLogger(__name__)
 version = apirun.__version__
 report_dir = ''
@@ -96,6 +99,46 @@ def parse_options():
         dest='make_demo',
         default=False,
         help="make demo xls in working folder"
+    )
+
+    parser.add_option(
+        '--email',
+        action='store_true',
+        dest='email',
+        default=False,
+        help='sending email after finishing api test'
+    )
+
+    parser.add_option(
+        '--from',
+        action='store_true',
+        dest='email_from',
+        default=False,
+        help='the user who sends email'
+    )
+
+    parser.add_option(
+        '--to',
+        action='store_true',
+        dest='email_to',
+        default=False,
+        help='the user(s) who receive email'
+    )
+
+    parser.add_option(
+        '--subject',
+        action='store_true',
+        dest='email_subject',
+        default=False,
+        help='the email subject'
+    )
+
+    parser.add_option(
+        '--host',
+        action='store_true',
+        dest='email_host',
+        default=False,
+        help='the email host'
     )
 
     # Finalize
@@ -196,21 +239,21 @@ def start_test(testcasefile):
                 _headers = {"Content-Type": "application/json"}
 
             if method == 'GET':  # GET
-                response_actual = requests.get(url=url, headers=_headers, params=query)
+                response_actual = requests.get(url=url, headers=_headers, params=query, verify=False)
             elif method == 'POST':  # POST
-                response_actual = requests.post(url=url, headers=_headers, json=request_body, params=query)
+                response_actual = requests.post(url=url, headers=_headers, json=request_body, params=query, verify=False)
             elif method == 'DELETE':  # DELETE
-                response_actual = requests.delete(url=url, headers=_headers, params=query)
+                response_actual = requests.delete(url=url, headers=_headers, params=query, verify=False)
             elif method == 'PUT':  # PUT
-                response_actual = requests.put(url=url, headers=_headers, params=query, json=request_body)
+                response_actual = requests.put(url=url, headers=_headers, params=query, json=request_body, verify=False)
             elif method == 'PATCH':  # patch
-                response_actual = requests.patch(url=url, headers=_headers, params=query, json=request_body)
+                response_actual = requests.patch(url=url, headers=_headers, params=query, json=request_body, verify=False)
             elif method == 'HEAD':
-                response_actual = requests.head(url=url, headers=_headers, params=query)
+                response_actual = requests.head(url=url, headers=_headers, params=query, verify=False)
             elif method == 'OPTIONS':
-                response_actual = requests.options(url=url, headers=_headers, params=query)
+                response_actual = requests.options(url=url, headers=_headers, params=query, verify=False)
             else:  # Other method, such as TRACE
-                response_actual = requests.request(method=method, url=url, headers=_headers, params=query, json=request_body)
+                response_actual = requests.request(method=method, url=url, headers=_headers, params=query, json=request_body, verify=False)
 
             actual_status_code = int(response_actual.status_code)
             if actual_status_code == exp_status_code:
@@ -252,14 +295,15 @@ def main():
 
     # setup logging
     # logger = logging.getLogger(__name__)
+    apirun_path = get_apirun_path()
+    pwd = os.getcwd()
+    _run = False
 
     if options.show_version:
         print("Apirun %s" % (version,))
         sys.exit(0)
 
     if options.make_demo:
-        pwd = os.getcwd()
-        apirun_path = get_apirun_path()
         if not apirun_path:
             logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
             if linux make sure python is installed in /usr/local/lib/''')
@@ -269,10 +313,79 @@ def main():
         shutil.copyfile(demo_path, new_demo)
         sys.exit(0)
 
+    if options.email:
+        global yag, email_from, subject
+        _email = []
+        if not (options.email_from and options.email_to):
+            if not os.path.isfile('email.json'):
+                logger.error('It is your first time to use email function, please fill email.json and run it again.')
+                demo_email = os.path.join(apirun_path, 'demo', 'email.json')
+                new_email = os.path.join(pwd, 'email.json')
+                shutil.copyfile(demo_email, new_email)
+                sys.exit(0)
+            else:
+                with open('email.json', 'r') as ef:
+                    email_info = json.load(ef)
+                email_from = email_info['from']
+                subject = email_info['subject']
+                if subject == '': subject = 'API Test Result'
+                receivers = email_info['receiver']
+                email_to = []
+                for _e in receivers.keys():
+                    email_to.extend(receivers[_e])
+                email_host = email_info['host']
+            if options.email_host:
+                email_host = options.email_host
+            if options.email_from:
+                email_from = options.email_from
+            if options.email_to:
+                _to = options.email_to
+                if _to in receivers.keys():
+                    email_to = receivers[_to]
+                else:
+                    email_to = email_in_cil(_to)
+            if options.email_subject:
+                subject = options.email_subject
+        else:
+            email_from = options.email_from
+            email_to = options.email_to
+            email_host = options.email_host
+            if options.email_subject: subject = options.email_subject
+            else: subject = 'API Test Result'
+
+        _email.append(email_from)
+        _email.extend(email_to)
+        for _each in _email:
+            if check_address(_each): pass
+            else:
+                logger.error('Email address is not correct: {}'.format(_each))
+                sys.exit(1)
+
+        yag = init_email(username=email_from, host=email_host)
+
+    if options.email_from:
+        if not options.email:
+            logger.error('Cannot use --from without --email.')
+            sys.exit(1)
+
+    if options.email_to:
+        if not options.email:
+            logger.error('Cannot use --to without --email.')
+            sys.exit(1)
+
+    if options.email_host:
+        if not options.email:
+            logger.error('Cannot use --host without --email.')
+            sys.exit(1)
+
+    if options.email_subject:
+        if not options.email:
+            logger.error('Cannot use --subject without --email.')
+            sys.exit(1)
+
     if options.report:
         global report_dir
         report_dir = options.report
-        apirun_path = get_apirun_path()
         if not apirun_path:
             logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
             if linux make sure python is installed in /usr/local/lib/''')
@@ -297,6 +410,7 @@ def main():
             sys.exit(1)
 
         start_test(testcasefile=testcasefile)
+        _run = True
 
     if options.testcasefolder:
         if options.testcasefile:
@@ -323,15 +437,24 @@ def main():
             print('+++++++++++++++ ' + testcasefile)
             t.start()
             t.join()
+        _run = True
 
     print('==================')
-    print('''
+    results_message = '''
     Results:
     Total: {t}
     Success: {s}
     Failure: {f}
     Error: {e}
-    '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error))
+    '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error)
+    print(results_message)
+
+    if yag and _run:
+        attachement = subject.replace(' ', '_') + '.zip'
+        zip_report(report_dir, attachement)
+        send_email(yag, subject=subject, to=email_to, msg=results_message, attachement=attachement)
+    else:
+        sys.exit(0)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,5 @@
 requests>=2.9.1
 ddt>=1.2.0
 xlrd>=1.2.0
+yagmail>=0.11.213
+keyring>=17.0.0

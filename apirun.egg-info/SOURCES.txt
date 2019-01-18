@@ -9,6 +9,7 @@ apirun/dealParameter.py
 apirun/extractExcel.py
 apirun/genReport.py
 apirun/getToken.py
+apirun/mail.py
 apirun/main.py
 apirun.egg-info/PKG-INFO
 apirun.egg-info/SOURCES.txt
@@ -18,4 +19,5 @@ apirun.egg-info/not-zip-safe
 apirun.egg-info/requires.txt
 apirun.egg-info/top_level.txt
 apirun/demo/demo_testcase.xls
+apirun/demo/email.json
 apirun/js/echarts.common.min.js

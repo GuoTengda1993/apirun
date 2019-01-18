@@ -1,0 +1,9 @@
+{
+  "from": "test@test.com",
+  "subject": "apirun test",
+  "host": "smtp.test.com",
+  "receiver": {
+    "Group01": ["mike@test.com", "lily@test.com"],
+    "ProductGroup": ["tom@test.com", "jerry@test.com"]
+  }
+}

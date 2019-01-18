@@ -3,7 +3,7 @@ import requests
 
 
 def get_token(url, body, locate):
-    response = requests.post(url=url, json=body)
+    response = requests.post(url=url, json=body, verify=False)
     if ':' in locate:
         l = locate.split(':')
     else:
