@@ -65,7 +65,7 @@ class HandleExcel:
         return testcases
 
     def auth_info(self):
-        auth_sheet = self.workbook.sheet_by_index(3)
+        auth_sheet = self.workbook.sheet_by_name('AuthInfo')
         token_url = auth_sheet.cell_value(0, 1)
         body = auth_sheet.cell_value(1, 1)
         token_para = auth_sheet.cell_value(2, 0)
@@ -79,14 +79,65 @@ class HandleExcel:
         return report_title, report_description
 
 
+class PtExcel(HandleExcel):
+
+    # def __init__(self, filename):
+    #     self.filename = filename
+    #     self.workbook = xlrd.open_workbook(self.filename)
+
+    def pt_config(self):
+        pt_sheet = self.workbook.sheet_by_name('PT')
+        host = pt_sheet.cell_value(0, 1)
+        min_wait = pt_sheet.cell_value(1, 1)
+        if min_wait == '' or isinstance(min_wait, str):
+            min_wait = str(300)
+        else:
+            min_wait = str(int(min_wait))
+        max_wait = pt_sheet.cell_value(2, 1)
+        if max_wait == '' or isinstance(max_wait, str):
+            max_wait = str(500)
+        else:
+            max_wait = str(int(max_wait))
+        token_type = pt_sheet.cell_value(4, 1)
+        run_in_order = pt_sheet.cell_value(5, 1)
+        return host, min_wait, max_wait, token_type, run_in_order
+
+    def pt_api_info(self):
+        pt_sheet = self.workbook.sheet_by_name('PT')
+        nrows = pt_sheet.nrows
+        api_list = []
+        pt_config = self.pt_config()
+        host = pt_config[0]
+        for i in range(8, nrows):
+            weight = str(int(pt_sheet.cell_value(i, 0)))
+            pt_url = pt_sheet.cell_value(i, 1)
+            method = pt_sheet.cell_value(i, 2)
+            query = pt_sheet.cell_value(i, 3)
+            if '\'' in query:
+                query.replace('\'', '"')
+            body = pt_sheet.cell_value(i, 4)
+            if '\'' in body:
+                body.replace('\'', '"')
+            api_list.append([weight, pt_url, method, query, body])
+        return api_list
+
+    def testcase_list(self):
+        pass
+
+    def report_info(self):
+        pass
+
+    def url_parameter(self):
+        pass
+
+    def request_parameter(self):
+        pass
+
+
 if __name__ == '__main__':
-    test = HandleExcel('E:\\Temp\\demo2.xls')
-    t = test.testcase_list()
-    for each in t:
+    test = PtExcel('E:\\Temp\\pt.xls')
+    conf = test.pt_config()
+    print(conf)
+    api = test.pt_api_info()
+    for each in api:
         print(each)
-    url = test.url_parameter()
-    print(url)
-    req = test.request_parameter()
-    print(req)
-    a, b, c, d = test.auth_info()
-    print(a, b, c, d)

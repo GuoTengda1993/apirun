@@ -4,6 +4,7 @@ README.md
 setup.cfg
 setup.py
 apirun/HTMLTestRunner_Modified.py
+apirun/PressureTest.py
 apirun/__init__.py
 apirun/dealParameter.py
 apirun/extractExcel.py
@@ -18,6 +19,7 @@ apirun.egg-info/entry_points.txt
 apirun.egg-info/not-zip-safe
 apirun.egg-info/requires.txt
 apirun.egg-info/top_level.txt
+apirun/demo/demo_pressuretest.xls
 apirun/demo/demo_testcase.xls
 apirun/demo/email.json
 apirun/js/echarts.common.min.js

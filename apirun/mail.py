@@ -50,9 +50,9 @@ def init_email(username, host):
         sys.exit(1)
 
 
-def send_email(yag, subject, to, msg, attachement, cc=None):
+def send_email(yag, subject, to, msg, attachment, cc=None):
     try:
-        yag.send(to=to, cc=cc, subject=subject, contents=[msg, attachement])
+        yag.send(to=to, cc=cc, subject=subject, contents=[msg, attachment])
     except SMTPException as er:
         logging.error('SMTP Error: {}'.format(er))
         sys.exit(1)

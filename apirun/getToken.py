@@ -14,6 +14,7 @@ def get_token(url, body, locate):
     elif l[0].lower() == 'json':
         rep = response.json()
         section = l[1].strip().split('.')
+        t_index = None
         if section[-1].endswith(']'):
             t_index = section[-1][-2]
             section[-1] = section[-1][:-3]

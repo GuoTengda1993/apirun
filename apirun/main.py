@@ -15,8 +15,9 @@ import apirun
 
 from .genReport import html_report
 from .getToken import get_token
-from .extractExcel import HandleExcel
+from .extractExcel import HandleExcel, PtExcel
 from .mail import *
+from .PressureTest import *
 
 
 urllib3.disable_warnings()
@@ -141,6 +142,26 @@ def parse_options():
         help='the email host'
     )
 
+    parser.add_option(
+        '--pt', '--pressuretest',
+        dest='PtFile',
+        help='run pressure test according to the xls, supported by locustio'
+    )
+
+    parser.add_option(
+        '--pt-demo',
+        action='store_true',
+        dest='PtDemo',
+        default=False,
+        help='make PT demo file in current folder'
+    )
+
+    parser.add_option(
+        '--pt-not-run',
+        dest='PtNotRun',
+        help='just make locustfile according to the xls'
+    )
+
     # Finalize
     # Return three-tuple of parser + the output from parse_args (opt obj, args)
     opts, args = parser.parse_args()
@@ -235,7 +256,7 @@ def start_test(testcasefile):
             exp_status_code = int(expect_status)
 
             _headers = self.headers
-            if auth == 'FALSE':
+            if int(auth) == 0:
                 _headers = {"Content-Type": "application/json"}
 
             if method == 'GET':  # GET
@@ -290,6 +311,101 @@ def start_test(testcasefile):
              testcase=ApiRun)
 
 
+def make_locustfile(ptfile):
+    locustfile = BASIC_IMPORT
+    pt_data = PtExcel(ptfile)
+    token_url, token_body, token_para, token_locate = pt_data.auth_info()
+    host, min_wait, max_wait, token_type, run_in_order = pt_data.pt_config()
+    pt_api_info = pt_data.pt_api_info()
+    if run_in_order == 0:
+        locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
+        if token_type != 'Everytime':
+            if token_type == 'JustFistTime':
+                locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
+                                                           TOKEN_BODY=token_body,
+                                                           TOKEN_LOCATE=token_locate,
+                                                           TOKEN_PARAM=token_para)
+            else:
+                locustfile += MODE_TOKEN_NEVER
+            ii = 0
+            for each_api in pt_api_info:
+                ii += 1
+                weight, pt_url, method, query, body = each_api
+                if query == '': query = '{}'
+                if body == '': body = '{}'
+                if method.upper() == 'GET':
+                    locustfile += MODE_TASKSET_GET.format(WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url)
+                else:
+                    locustfile += MODE_TASKSET_POST.format(WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body, URL=pt_url)
+        else:
+            ii = 0
+            for each_api in pt_api_info:
+                ii += 1
+                weight, pt_url, method, query, body = each_api
+                if query == '': query = '{}'
+                if body == '': body = '{}'
+                if method.upper() == 'GET':
+                    locustfile += MODE_TASKSET_GET_TOKEN.format(WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url,
+                                                                TOKEN_BODY=token_body,
+                                                                TOKEN_URL=token_url,
+                                                                TOKEN_LOCATE=token_locate,
+                                                                TOKEN_PARAM=token_para)
+                else:
+                    locustfile += MODE_TASKSET_POST_TOKEN.format(WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body,
+                                                                 URL=pt_url,
+                                                                 TOKEN_BODY=token_body,
+                                                                 TOKEN_URL=token_url,
+                                                                 TOKEN_LOCATE=token_locate,
+                                                                 TOKEN_PARAM=token_para)
+    else:
+        locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
+        if token_type != 'Everytime':
+            if token_type == 'JustFistTime':
+                locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
+                                                           TOKEN_BODY=token_body,
+                                                           TOKEN_LOCATE=token_locate,
+                                                           TOKEN_PARAM=token_para)
+            else:
+                locustfile += MODE_TOKEN_NEVER
+            ii = 0
+            for each_api in pt_api_info:
+                ii += 1
+                weight, pt_url, method, query, body = each_api
+                if query == '': query = '{}'
+                if body == '': body = '{}'
+                if method.upper() == 'GET':
+                    locustfile += MODE_TASK_SEQ_GET.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url)
+                else:
+                    locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body, URL=pt_url)
+        else:
+            ii = 0
+            for each_api in pt_api_info:
+                ii += 1
+                weight, pt_url, method, query, body = each_api
+                if query == '': query = '{}'
+                if body == '': body = '{}'
+                if method.upper() == 'GET':
+                    locustfile += MODE_TASK_SEQ_GET_TOKEN.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url,
+                                                                 TOKEN_BODY=token_body,
+                                                                 TOKEN_URL=token_url,
+                                                                 TOKEN_LOCATE=token_locate,
+                                                                 TOKEN_PARAM=token_para)
+                else:
+                    locustfile += MODE_TASK_SEQ_POST_TOKEN.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query,
+                                                                  POST_BODY=body,
+                                                                  URL=pt_url,
+                                                                  TOKEN_BODY=token_body,
+                                                                  TOKEN_URL=token_url,
+                                                                  TOKEN_LOCATE=token_locate,
+                                                                  TOKEN_PARAM=token_para)
+    locustfile += BASIC_LAST.format(HOST=host, MIN_WAIT=min_wait, MAX_WAIT=max_wait)
+    locustfile = locustfile.replace('@-', '{')
+    locustfile = locustfile.replace('-@', '}')
+    l_f = ptfile.replace('.xls', '.py')
+    with open(l_f, 'w', encoding='utf-8') as f:
+        f.writelines(locustfile)
+
+
 def main():
     parser, options, arguments = parse_options()
 
@@ -313,8 +429,18 @@ def main():
         shutil.copyfile(demo_path, new_demo)
         sys.exit(0)
 
+    if options.PtDemo:
+        if not apirun_path:
+            logger.error('''Cannot locate Python path, make sure it is in right place. If windows add it to sys PATH,
+            if linux make sure python is installed in /usr/local/lib/''')
+            sys.exit(1)
+        pt_demo_path = os.path.join(apirun_path, 'demo', 'demo_pressuretest.xls')
+        pt_new_demo = os.path.join(pwd, 'PtDemo.xls')
+        shutil.copyfile(pt_demo_path, pt_new_demo)
+        sys.exit(0)
+
     if options.email:
-        global yag, email_from, subject
+        global yag, email_to, subject
         _email = []
         if not (options.email_from and options.email_to):
             if not os.path.isfile('email.json'):
@@ -403,7 +529,7 @@ def main():
             sys.exit(1)
         testcasefile = options.testcasefile
         if not testcasefile.endswith('.xls'):
-            logger.error("Testcasefile must ends in '.xls' and see --help for available options.")
+            logger.error("Testcasefile must be end with '.xls' and see --help for available options.")
             sys.exit(1)
         if not os.path.isfile(testcasefile):
             logger.error('Testcasefile is not exist, please check it.')
@@ -439,23 +565,56 @@ def main():
             t.join()
         _run = True
 
-    print('==================')
-    results_message = '''
-    Results:
-    Total: {t}
-    Success: {s}
-    Failure: {f}
-    Error: {e}
-    '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error)
-    print(results_message)
-
-    if yag and _run:
-        attachement = subject.replace(' ', '_') + '.zip'
-        zip_report(report_dir, attachement)
-        send_email(yag, subject=subject, to=email_to, msg=results_message, attachement=attachement)
-    else:
+    if options.PtNotRun:
+        if options.PtFile:
+            logger.error('Cannot use --pt and --pt-not-run together.')
+            sys.exit(1)
+        pt_file = options.PtNotRun
+        if not pt_file.endswith('.xls'):
+            logger.error("PressureTest file must be end with '.xls' and see --help for available options.")
+            sys.exit(1)
+        if not os.path.isfile(pt_file):
+            logger.error('PressureTest file is not exist, please check it.')
+            sys.exit(1)
+        make_locustfile(pt_file)
+        logger.info('Generate locustfile success.')
         sys.exit(0)
+
+    if options.PtFile:
+        if options.PtNotRun:
+            logger.error('Cannot use --pt and --pt-not-run together.')
+            sys.exit(1)
+        pt_file = options.PtFile
+        if not pt_file.endswith('.xls'):
+            logger.error("PressureTest file must be end with '.xls' and see --help for available options.")
+            sys.exit(1)
+        if not os.path.isfile(pt_file):
+            logger.error('PressureTest file is not exist, please check it.')
+            sys.exit(1)
+        make_locustfile(pt_file)
+        ptpy = pt_file.replace('.xls', '.py')
+        pt_report = pt_file.strip('.xls')
+        locust_cli = 'locust -f {locustfile} --csv={ptReport}'.format(locustfile=ptpy, ptReport=pt_report)
+        os.system(locust_cli)
+
+    if _run:
+        print('==================')
+        results_message = '''
+        Results:
+        Total: {t}
+        Success: {s}
+        Failure: {f}
+        Error: {e}
+        '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error)
+        print(results_message)
+
+        if yag:
+            attachment = subject.replace(' ', '_') + '.zip'
+            zip_report(report_dir, attachment)
+            send_email(yag, subject=subject, to=email_to, msg=results_message, attachment=attachment)
+        else:
+            sys.exit(0)
 
 
 if __name__ == '__main__':
-    main()
+    make_locustfile('E:\\Temp\\pt.xls')
