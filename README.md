@@ -32,5 +32,14 @@ Open Console, type `apirun --help`, you will see some parameters
 >--host
 >>the email host, will cover the info in email.json, is required no metter in json file or in parameter
 
+>--pt, --pressuretest
+>>run pressure test according to the xls, supported by locustio
+
+>--pt-demo
+>>make PT demo file in current folder
+
+>--pt-not-run
+>>just make locustfile according to the xls
+
 ## Pending
 * More api test situations
