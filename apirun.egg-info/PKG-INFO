@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: apirun
-Version: 0.2.4
+Version: 0.2.5
 Summary: API testing framework
 Home-page: UNKNOWN
 Author: Guo Tengda
@@ -39,6 +39,15 @@ Description: # apirun
         
         >--host
         >>the email host, will cover the info in email.json, is required no metter in json file or in parameter
+        
+        >--pt, --pressuretest
+        >>run pressure test according to the xls, supported by locustio
+        
+        >--pt-demo
+        >>make PT demo file in current folder
+        
+        >--pt-not-run
+        >>just make locustfile according to the xls
         
         ## Pending
         * More api test situations

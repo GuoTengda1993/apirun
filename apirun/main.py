@@ -256,7 +256,7 @@ def start_test(testcasefile):
             exp_status_code = int(expect_status)
 
             _headers = self.headers
-            if int(auth) == 0:
+            if str(auth) == '0' or auth == 'FALSE':
                 _headers = {"Content-Type": "application/json"}
 
             if method == 'GET':  # GET
@@ -317,7 +317,7 @@ def make_locustfile(ptfile):
     token_url, token_body, token_para, token_locate = pt_data.auth_info()
     host, min_wait, max_wait, token_type, run_in_order = pt_data.pt_config()
     pt_api_info = pt_data.pt_api_info()
-    if run_in_order == 0:
+    if str(run_in_order) == '0' or run_in_order == 'FALSE':
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
         if token_type != 'Everytime':
             if token_type == 'JustFistTime':
@@ -617,4 +617,4 @@ def main():
 
 
 if __name__ == '__main__':
-    make_locustfile('E:\\Temp\\pt.xls')
+    main()

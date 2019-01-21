@@ -81,10 +81,6 @@ class HandleExcel:
 
 class PtExcel(HandleExcel):
 
-    # def __init__(self, filename):
-    #     self.filename = filename
-    #     self.workbook = xlrd.open_workbook(self.filename)
-
     def pt_config(self):
         pt_sheet = self.workbook.sheet_by_name('PT')
         host = pt_sheet.cell_value(0, 1)
@@ -106,8 +102,6 @@ class PtExcel(HandleExcel):
         pt_sheet = self.workbook.sheet_by_name('PT')
         nrows = pt_sheet.nrows
         api_list = []
-        pt_config = self.pt_config()
-        host = pt_config[0]
         for i in range(8, nrows):
             weight = str(int(pt_sheet.cell_value(i, 0)))
             pt_url = pt_sheet.cell_value(i, 1)
