@@ -595,8 +595,13 @@ def main():
         ptpy = pt_file.replace('.xls', '.py')
         pt_report = pt_file.strip('.xls')
         locust_cli = 'locust -f {locustfile} --csv={ptReport}'.format(locustfile=ptpy, ptReport=pt_report)
-        os.system(locust_cli)
-
+        try:
+            os.system(locust_cli)
+        except KeyboardInterrupt:
+            shutil.move(pt_report+'_distribution.csv', os.path.join(report_dir, pt_report+'_distribution.csv'))
+            shutil.move(pt_report+'_requests.csv', os.path.join(report_dir, pt_report+'_requests.csv'))
+            sys.exit(0)
+            
     if _run:
         print('==================')
         results_message = '''
