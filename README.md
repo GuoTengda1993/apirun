@@ -41,5 +41,7 @@ Open Console, type `apirun --help`, you will see some parameters
 >--pt-not-run
 >>just make locustfile according to the xls
 
+>--master
+>>Set locust to run in distributed mode with this process as master, use this parameter with --pt
 ## Pending
 * More api test situations

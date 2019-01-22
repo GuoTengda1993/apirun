@@ -40,7 +40,8 @@ setup(
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=["requests>=2.9.1", "ddt>=1.2.0", "xlrd>=1.2.0", "yagmail>=0.11.213", "keyring>=17.0.0", "locustio>=0.9.0"],
+    install_requires=["requests>=2.9.1", "ddt>=1.2.0", "xlrd>=1.2.0", "yagmail>=0.11.213", "keyring>=17.0.0",
+                      "locustio>=0.9.0", "paramiko>=2.4.1"],
     test_suite="",
     tests_require=[],
     entry_points={

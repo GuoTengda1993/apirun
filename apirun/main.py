@@ -18,6 +18,7 @@ from .getToken import get_token
 from .extractExcel import HandleExcel, PtExcel
 from .mail import *
 from .PressureTest import *
+from .PtSlave import ConnectSlave
 
 
 urllib3.disable_warnings()
@@ -160,6 +161,14 @@ def parse_options():
         '--pt-not-run',
         dest='PtNotRun',
         help='just make locustfile according to the xls'
+    )
+
+    parser.add_option(
+        '--master',
+        action='store_true',
+        default=False,
+        dest='master',
+        help='Set locust to run in distributed mode with this process as master, use this parameter with --pt'
     )
 
     # Finalize
@@ -406,6 +415,16 @@ def make_locustfile(ptfile):
         f.writelines(locustfile)
 
 
+def pt_slave(ip, username, password, ptfile, ptcommand):
+    connect = ConnectSlave(ip, username, password)
+    is_locust = connect.check_locust()
+    if is_locust:
+        connect.trans_file(source=ptfile, dest='/root/')
+        connect.remote_command(command=ptcommand)
+    else:
+        logging.error('Slave {} cannot run locust.'.format(ip))
+
+
 def main():
     parser, options, arguments = parse_options()
 
@@ -414,6 +433,7 @@ def main():
     apirun_path = get_apirun_path()
     pwd = os.getcwd()
     _run = False
+    _email = False
 
     if options.show_version:
         print("Apirun %s" % (version,))
@@ -488,6 +508,7 @@ def main():
                 sys.exit(1)
 
         yag = init_email(username=email_from, host=email_host)
+        _email = True
 
     if options.email_from:
         if not options.email:
@@ -507,6 +528,11 @@ def main():
     if options.email_subject:
         if not options.email:
             logger.error('Cannot use --subject without --email.')
+            sys.exit(1)
+
+    if options.master:
+        if not options.PtFile:
+            logger.error('Cannot use --master without --pt.')
             sys.exit(1)
 
     if options.report:
@@ -591,34 +617,66 @@ def main():
         if not os.path.isfile(pt_file):
             logger.error('PressureTest file is not exist, please check it.')
             sys.exit(1)
+        global _run_pt
+        _run_pt = False
         make_locustfile(pt_file)
         ptpy = pt_file.replace('.xls', '.py')
         pt_report = pt_file.strip('.xls')
-        locust_cli = 'locust -f {locustfile} --csv={ptReport}'.format(locustfile=ptpy, ptReport=pt_report)
-        try:
-            os.system(locust_cli)
-        except KeyboardInterrupt:
-            shutil.move(pt_report+'_distribution.csv', os.path.join(report_dir, pt_report+'_distribution.csv'))
-            shutil.move(pt_report+'_requests.csv', os.path.join(report_dir, pt_report+'_requests.csv'))
-            sys.exit(0)
-            
-    if _run:
-        print('==================')
-        results_message = '''
-        Results:
-        Total: {t}
-        Success: {s}
-        Failure: {f}
-        Error: {e}
-        '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error)
-        print(results_message)
+        if not options.master:
+            locust_cli = 'locust -f {locustfile} --csv={ptReport}'.format(locustfile=ptpy, ptReport=pt_report)
+            try:
+                os.system(locust_cli)
+            except KeyboardInterrupt:
+                shutil.move(pt_report+'_distribution.csv', os.path.join(report_dir, pt_report+'_distribution.csv'))
+                shutil.move(pt_report+'_requests.csv', os.path.join(report_dir, pt_report+'_requests.csv'))
+                _run_pt = True
+        else:
+            pt_s = PtExcel(pt_file)
+            master_ip, pt_slave_info = pt_s.pt_slave()
+            if master_ip == '':
+                logger.error('master IP cannot be None if you use --master')
+                sys.exit(1)
+            if 'win' in sys.platform.lower():
+                locust_cli_master = 'start /b locust -f {locustfile} --csv={ptReport} --master'.format(locustfile=ptpy, ptReport=pt_report)
+            else:
+                locust_cli_master = 'locust -f {locustfile} --csv={ptReport} --master &'.format(locustfile=ptpy, ptReport=pt_report)
+            try:
+                os.system(locust_cli_master)
+                locust_cli_slave = 'locust -f /root/{locustfile} --slave --master-host={masteIP} &'.format(locustfile=ptpy, masteIP=master_ip)
+                for slave in pt_slave_info:
+                    slave_ip, slave_username, slave_password = slave
+                    _t = Thread(target=pt_slave, args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
+                    logger.info('Prepare slave {}'.format(slave_ip))
+                    _t.start()
+                    _t.join()
+            except Exception as e:
+                logger.error('Must someting happend, collect Exceptions here: {}'.format(e))
+            finally:
+                shutil.move(pt_report + '_distribution.csv', os.path.join(report_dir, pt_report + '_distribution.csv'))
+                shutil.move(pt_report + '_requests.csv', os.path.join(report_dir, pt_report + '_requests.csv'))
+                _run_pt = True
 
-        if yag:
+    if _run or _run_pt:
+        if _run:
+            print('==================')
+            results_message = '''
+            Results:
+            Total: {t}
+            Success: {s}
+            Failure: {f}
+            Error: {e}
+            '''.format(t=(_success + _failure + _error), s=_success, f=_failure, e=_error)
+            print(results_message)
+        else:
+            results_message = 'Pressure Test Result.'
+
+        if _email:
             attachment = subject.replace(' ', '_') + '.zip'
             zip_report(report_dir, attachment)
             send_email(yag, subject=subject, to=email_to, msg=results_message, attachment=attachment)
         else:
             sys.exit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':

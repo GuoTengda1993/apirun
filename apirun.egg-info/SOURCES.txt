@@ -5,6 +5,7 @@ setup.cfg
 setup.py
 apirun/HTMLTestRunner_Modified.py
 apirun/PressureTest.py
+apirun/PtSlave.py
 apirun/__init__.py
 apirun/dealParameter.py
 apirun/extractExcel.py
