@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: apirun
-Version: 0.2.7
+Version: 0.2.8
 Summary: API testing framework
 Home-page: UNKNOWN
 Author: Guo Tengda
@@ -41,7 +41,7 @@ Description: # apirun
         >>the email host, will cover the info in email.json, is required no metter in json file or in parameter
         
         >--pt, --pressuretest
-        >>run pressure test according to the xls, supported by locustio
+        >>run pressure test according to the xls, supported by locustio; `Ctrl + C`, if you want to stop it.
         
         >--pt-demo
         >>make PT demo file in current folder
@@ -50,7 +50,8 @@ Description: # apirun
         >>just make locustfile according to the xls
         
         >--master
-        >>Set locust to run in distributed mode with this process as master, use this parameter with --pt
+        >>Set locust to run in distributed mode with this process as master, use this parameter with --pt; `Ctrl + Break`, if you want to stop it.
+        
         ## Pending
         * More api test situations
         

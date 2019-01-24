@@ -33,7 +33,7 @@ Open Console, type `apirun --help`, you will see some parameters
 >>the email host, will cover the info in email.json, is required no metter in json file or in parameter
 
 >--pt, --pressuretest
->>run pressure test according to the xls, supported by locustio
+>>run pressure test according to the xls, supported by locustio; `Ctrl + C`, if you want to stop it.
 
 >--pt-demo
 >>make PT demo file in current folder
@@ -42,6 +42,7 @@ Open Console, type `apirun --help`, you will see some parameters
 >>just make locustfile according to the xls
 
 >--master
->>Set locust to run in distributed mode with this process as master, use this parameter with --pt
+>>Set locust to run in distributed mode with this process as master, use this parameter with --pt; `Ctrl + Break`, if you want to stop it.
+
 ## Pending
 * More api test situations

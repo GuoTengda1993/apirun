@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import logging
 import paramiko
 
@@ -22,15 +23,15 @@ class ConnectSlave:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=self.ip, port=22, username=self.username, password=self.password)
         stdin, stdout, stderr = ssh.exec_command(command)
-        error = stderr.readlines()
+        error = stderr.read()
         ssh.close()
         if error:
             return 0
         else:
-            return 1
+            return stdout
 
     def check_locust(self):
-        res = self.remote_command('locust -V')
+        res = self.remote_command('locust -h')
         if not res:
             pipit = self.remote_command('pip install locustio')
             if not pipit:
@@ -40,3 +41,25 @@ class ConnectSlave:
                 return 1
         else:
             return 1
+
+    def get_pid(self, keyword):
+        all_pid = self.remote_command('ps -aux')
+        pid_list = all_pid.readlines()
+        pid = 0
+        for each in pid_list:
+            if keyword in each:
+                pid = re.split('\s+', each)[1]
+                break
+        return pid
+
+
+# def kill_locust(ip, username, password, pid):
+#     kill = ConnectSlave(ip, username, password)
+#     kill.remote_command('kill {pid}'.format(pid=pid))
+
+
+if __name__ == '__main__':
+    c = ConnectSlave('192.168.37.130', 'root', 'lovewangqian')
+    out = c.remote_command('locust -f /root/PtDemo.py --slave --master-host=192.168.31.189')
+    print(out)
+    print(type(out))

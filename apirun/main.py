@@ -1,6 +1,3 @@
-import logging
-import os
-import sys
 import shutil
 from threading import Thread
 from threading import Lock
@@ -30,6 +27,8 @@ _success = 0
 _failure = 0
 _error = 0
 _count_lock = Lock()
+# _slave_pool = {}
+# _slave_lock = Lock()
 
 
 def add_success(num_s):
@@ -419,8 +418,14 @@ def pt_slave(ip, username, password, ptfile, ptcommand):
     connect = ConnectSlave(ip, username, password)
     is_locust = connect.check_locust()
     if is_locust:
-        connect.trans_file(source=ptfile, dest='/root/')
+        global _slave_pool
+        dest = '/root/' + ptfile
+        connect.trans_file(source=ptfile, dest=dest)
         connect.remote_command(command=ptcommand)
+        # pid = connect.get_pid('locust -f')
+        # _slave_lock.acquire()
+        # _slave_pool[ip] = [username, password, pid]
+        # _slave_lock.release()
     else:
         logging.error('Slave {} cannot run locust.'.format(ip))
 
@@ -433,7 +438,7 @@ def main():
     apirun_path = get_apirun_path()
     pwd = os.getcwd()
     _run = False
-    _email = False
+    _email_mark = False
 
     if options.show_version:
         print("Apirun %s" % (version,))
@@ -508,7 +513,7 @@ def main():
                 sys.exit(1)
 
         yag = init_email(username=email_from, host=email_host)
-        _email = True
+        _email_mark = True
 
     if options.email_from:
         if not options.email:
@@ -637,23 +642,30 @@ def main():
                 logger.error('master IP cannot be None if you use --master')
                 sys.exit(1)
             if 'win' in sys.platform.lower():
-                locust_cli_master = 'start /b locust -f {locustfile} --csv={ptReport} --master'.format(locustfile=ptpy, ptReport=pt_report)
+                locust_cli_master = 'locust -f {locustfile} --csv={ptReport} --master'.format(locustfile=ptpy, ptReport=pt_report)
             else:
-                locust_cli_master = 'locust -f {locustfile} --csv={ptReport} --master &'.format(locustfile=ptpy, ptReport=pt_report)
+                locust_cli_master = 'locust -f {locustfile} --csv={ptReport} --master'.format(locustfile=ptpy, ptReport=pt_report)
             try:
-                os.system(locust_cli_master)
-                locust_cli_slave = 'locust -f /root/{locustfile} --slave --master-host={masteIP} &'.format(locustfile=ptpy, masteIP=master_ip)
+                locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} &'.format(locustfile=ptpy, masteIP=master_ip)
                 for slave in pt_slave_info:
                     slave_ip, slave_username, slave_password = slave
                     _t = Thread(target=pt_slave, args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
                     logger.info('Prepare slave {}'.format(slave_ip))
                     _t.start()
                     _t.join()
+                os.system(locust_cli_master)
+            except KeyboardInterrupt:
+                pass
             except Exception as e:
                 logger.error('Must someting happend, collect Exceptions here: {}'.format(e))
             finally:
                 shutil.move(pt_report + '_distribution.csv', os.path.join(report_dir, pt_report + '_distribution.csv'))
                 shutil.move(pt_report + '_requests.csv', os.path.join(report_dir, pt_report + '_requests.csv'))
+                # for each_slave in _slave_pool:
+                #     uname, passwd, pid = _slave_pool[each_slave]
+                #     _k = Thread(target=kill_locust, args=(each_slave, uname, passwd, pid))
+                #     _k.start()
+                #     _k.join()
                 _run_pt = True
 
     if _run or _run_pt:
@@ -670,7 +682,7 @@ def main():
         else:
             results_message = 'Pressure Test Result.'
 
-        if _email:
+        if _email_mark:
             attachment = subject.replace(' ', '_') + '.zip'
             zip_report(report_dir, attachment)
             send_email(yag, subject=subject, to=email_to, msg=results_message, attachment=attachment)
