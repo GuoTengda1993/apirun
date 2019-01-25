@@ -53,13 +53,8 @@ class ConnectSlave:
         return pid
 
 
-# def kill_locust(ip, username, password, pid):
-#     kill = ConnectSlave(ip, username, password)
-#     kill.remote_command('kill {pid}'.format(pid=pid))
-
-
 if __name__ == '__main__':
-    c = ConnectSlave('192.168.37.130', 'root', 'lovewangqian')
-    out = c.remote_command('locust -f /root/PtDemo.py --slave --master-host=192.168.31.189')
-    print(out)
+    c = ConnectSlave('192.168.37.130', 'root', '1q2w3e4r5t')
+    out = c.remote_command('nohup locust -f /root/PtDemo.py --slave --master-host=192.168.31.189 > /dev/null 2>&1 &')
+    print(out.read())
     print(type(out))

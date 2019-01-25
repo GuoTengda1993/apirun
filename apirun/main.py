@@ -27,8 +27,6 @@ _success = 0
 _failure = 0
 _error = 0
 _count_lock = Lock()
-# _slave_pool = {}
-# _slave_lock = Lock()
 
 
 def add_success(num_s):
@@ -418,14 +416,9 @@ def pt_slave(ip, username, password, ptfile, ptcommand):
     connect = ConnectSlave(ip, username, password)
     is_locust = connect.check_locust()
     if is_locust:
-        global _slave_pool
         dest = '/root/' + ptfile
         connect.trans_file(source=ptfile, dest=dest)
         connect.remote_command(command=ptcommand)
-        # pid = connect.get_pid('locust -f')
-        # _slave_lock.acquire()
-        # _slave_pool[ip] = [username, password, pid]
-        # _slave_lock.release()
     else:
         logging.error('Slave {} cannot run locust.'.format(ip))
 
@@ -646,7 +639,7 @@ def main():
             else:
                 locust_cli_master = 'locust -f {locustfile} --csv={ptReport} --master'.format(locustfile=ptpy, ptReport=pt_report)
             try:
-                locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} &'.format(locustfile=ptpy, masteIP=master_ip)
+                locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(locustfile=ptpy, masteIP=master_ip)
                 for slave in pt_slave_info:
                     slave_ip, slave_username, slave_password = slave
                     _t = Thread(target=pt_slave, args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
@@ -661,11 +654,6 @@ def main():
             finally:
                 shutil.move(pt_report + '_distribution.csv', os.path.join(report_dir, pt_report + '_distribution.csv'))
                 shutil.move(pt_report + '_requests.csv', os.path.join(report_dir, pt_report + '_requests.csv'))
-                # for each_slave in _slave_pool:
-                #     uname, passwd, pid = _slave_pool[each_slave]
-                #     _k = Thread(target=kill_locust, args=(each_slave, uname, passwd, pid))
-                #     _k.start()
-                #     _k.join()
                 _run_pt = True
 
     if _run or _run_pt:
