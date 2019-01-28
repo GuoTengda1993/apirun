@@ -293,7 +293,7 @@ def start_test(testcasefile):
                         expect_str = expect_str.strip(';')
                     if expect_str.endswith('；'):
                         expect_str = expect_str.strip('；')
-                    if ';' and '；' not in expect_str:
+                    if (';' not in expect_str) and ('；' not in expect_str):
                         self.assertIn(expect_str, str(act_response), msg='{} is not in response'.format(expect_str))
                     else:
                         if ';' in expect_str:
