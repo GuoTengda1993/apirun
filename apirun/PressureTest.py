@@ -4,7 +4,10 @@ import sys
 import requests
 import logging
 from locust import TaskSet, HttpLocust, TaskSequence, task, seq_task
+from requests.packages import urllib3
 
+
+urllib3.disable_warnings()
 
 def get_token(url, body, locate):
     try:
@@ -64,21 +67,21 @@ MODE_TASKSET_GET = '''
     @task({WEIGHT})
     def test{NUM}(self):
         query = {QUERY}
-        self.client.get('{URL}', headers=headers, params=query)
+        self.client.get('{URL}', headers=headers, params=query, verify=False)
 '''
 MODE_TASKSET_POST = '''
     @task({WEIGHT})
     def test{NUM}(self):
         query = {QUERY}
         body = {POST_BODY}
-        self.client.post('{URL}', json=body, headers=headers, params=query)
+        self.client.post('{URL}', json=body, headers=headers, params=query, verify=False)
 '''
 MODE_TASK_SEQ_GET = '''
     @seq_task({SEQ})
     @task({WEIGHT})
     def test{NUM}(self):
         query = {QUERY}
-        self.client.get('{URL}', headers=headers, params=query)
+        self.client.get('{URL}', headers=headers, params=query, verify=False)
 '''
 MODE_TASK_SEQ_POST = '''
     @seq_task({SEQ})
@@ -86,7 +89,7 @@ MODE_TASK_SEQ_POST = '''
     def test{NUM}(self):
         query = {QUERY}
         body = {POST_BODY}
-        self.client.post('{URL}', json=body, headers=headers, params=query)
+        self.client.post('{URL}', json=body, headers=headers, params=query, verify=False)
 '''
 MODE_TASKSET_GET_TOKEN = '''
     @task({WEIGHT})
@@ -95,7 +98,7 @@ MODE_TASKSET_GET_TOKEN = '''
         token = get_token(url='{TOKEN_URL}', body=body, locate='{TOKEN_LOCATE}')
         headers = @-"Content-Type": "application/json", "{TOKEN_PARAM}": token-@
         query = {QUERY}
-        self.client.get('{URL}', headers=headers, params=query)
+        self.client.get('{URL}', headers=headers, params=query, verify=False)
 '''
 MODE_TASKSET_POST_TOKEN = '''
     @task({WEIGHT})
@@ -105,7 +108,7 @@ MODE_TASKSET_POST_TOKEN = '''
         headers = @-"Content-Type": "application/json", "{TOKEN_PARAM}": token-@
         query = {QUERY}
         body = {POST_BODY}
-        self.client.post('{URL}', json=body, headers=headers, params=query)
+        self.client.post('{URL}', json=body, headers=headers, params=query, verify=False)
 '''
 MODE_TASK_SEQ_GET_TOKEN = '''
     @seq_task({SEQ})
@@ -115,7 +118,7 @@ MODE_TASK_SEQ_GET_TOKEN = '''
         token = get_token(url='{TOKEN_URL}', body=body, locate='{TOKEN_LOCATE}')
         headers = @-"Content-Type": "application/json", "{TOKEN_PARAM}": token-@
         query = {QUERY}
-        self.client.get('{URL}', headers=headers, params=query)
+        self.client.get('{URL}', headers=headers, params=query, verify=False)
 '''
 MODE_TASK_SEQ_POST_TOKEN = '''
     @seq_task({SEQ})
@@ -126,5 +129,5 @@ MODE_TASK_SEQ_POST_TOKEN = '''
         headers = @-"Content-Type": "application/json", "{TOKEN_PARAM}": token-@
         query = {QUERY}
         body = {POST_BODY}
-        self.client.post('{URL}', json=body, headers=headers, params=query)
+        self.client.post('{URL}', json=body, headers=headers, params=query, verify=False)
 '''
