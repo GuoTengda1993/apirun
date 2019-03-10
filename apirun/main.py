@@ -12,7 +12,7 @@ import apirun
 
 from .genReport import html_report
 from .getToken import get_token
-from .extractExcel import HandleExcel, PtExcel
+from .extractExcel import HandleExcel
 from .mail import *
 from .PressureTest import *
 from .PtSlave import ConnectSlave
@@ -315,101 +315,6 @@ def start_test(testcasefile):
     report_filename = testcasefile.replace('\\', '-')
     run_test(title=report_title, filename=report_filename, report_path=report_dir, description=report_description,
              testcase=ApiRun)
-
-
-def make_locustfile(ptfile):
-    locustfile = BASIC_IMPORT
-    pt_data = PtExcel(ptfile)
-    token_url, token_body, token_para, token_locate = pt_data.auth_info()
-    host, min_wait, max_wait, token_type, run_in_order = pt_data.pt_config()
-    pt_api_info = pt_data.pt_api_info()
-    if str(run_in_order) == '0' or run_in_order == 'FALSE':
-        locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
-        if token_type != 'Everytime':
-            if token_type == 'JustFistTime':
-                locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
-                                                           TOKEN_BODY=token_body,
-                                                           TOKEN_LOCATE=token_locate,
-                                                           TOKEN_PARAM=token_para)
-            else:
-                locustfile += MODE_TOKEN_NEVER
-            ii = 0
-            for each_api in pt_api_info:
-                ii += 1
-                weight, pt_url, method, query, body = each_api
-                if query == '': query = '{}'
-                if body == '': body = '{}'
-                if method.upper() == 'GET':
-                    locustfile += MODE_TASKSET_GET.format(WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url)
-                else:
-                    locustfile += MODE_TASKSET_POST.format(WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body, URL=pt_url)
-        else:
-            ii = 0
-            for each_api in pt_api_info:
-                ii += 1
-                weight, pt_url, method, query, body = each_api
-                if query == '': query = '{}'
-                if body == '': body = '{}'
-                if method.upper() == 'GET':
-                    locustfile += MODE_TASKSET_GET_TOKEN.format(WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url,
-                                                                TOKEN_BODY=token_body,
-                                                                TOKEN_URL=token_url,
-                                                                TOKEN_LOCATE=token_locate,
-                                                                TOKEN_PARAM=token_para)
-                else:
-                    locustfile += MODE_TASKSET_POST_TOKEN.format(WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body,
-                                                                 URL=pt_url,
-                                                                 TOKEN_BODY=token_body,
-                                                                 TOKEN_URL=token_url,
-                                                                 TOKEN_LOCATE=token_locate,
-                                                                 TOKEN_PARAM=token_para)
-    else:
-        locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
-        if token_type != 'Everytime':
-            if token_type == 'JustFistTime':
-                locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
-                                                           TOKEN_BODY=token_body,
-                                                           TOKEN_LOCATE=token_locate,
-                                                           TOKEN_PARAM=token_para)
-            else:
-                locustfile += MODE_TOKEN_NEVER
-            ii = 0
-            for each_api in pt_api_info:
-                ii += 1
-                weight, pt_url, method, query, body = each_api
-                if query == '': query = '{}'
-                if body == '': body = '{}'
-                if method.upper() == 'GET':
-                    locustfile += MODE_TASK_SEQ_GET.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url)
-                else:
-                    locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, POST_BODY=body, URL=pt_url)
-        else:
-            ii = 0
-            for each_api in pt_api_info:
-                ii += 1
-                weight, pt_url, method, query, body = each_api
-                if query == '': query = '{}'
-                if body == '': body = '{}'
-                if method.upper() == 'GET':
-                    locustfile += MODE_TASK_SEQ_GET_TOKEN.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query, URL=pt_url,
-                                                                 TOKEN_BODY=token_body,
-                                                                 TOKEN_URL=token_url,
-                                                                 TOKEN_LOCATE=token_locate,
-                                                                 TOKEN_PARAM=token_para)
-                else:
-                    locustfile += MODE_TASK_SEQ_POST_TOKEN.format(SEQ=ii, WEIGHT=weight, NUM=ii, QUERY=query,
-                                                                  POST_BODY=body,
-                                                                  URL=pt_url,
-                                                                  TOKEN_BODY=token_body,
-                                                                  TOKEN_URL=token_url,
-                                                                  TOKEN_LOCATE=token_locate,
-                                                                  TOKEN_PARAM=token_para)
-    locustfile += BASIC_LAST.format(HOST=host, MIN_WAIT=min_wait, MAX_WAIT=max_wait)
-    locustfile = locustfile.replace('@-', '{')
-    locustfile = locustfile.replace('-@', '}')
-    l_f = ptfile.replace('.xls', '.py')
-    with open(l_f, 'w', encoding='utf-8') as f:
-        f.writelines(locustfile)
 
 
 def pt_slave(ip, username, password, ptfile, ptcommand):

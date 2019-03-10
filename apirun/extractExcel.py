@@ -127,6 +127,16 @@ class PtExcel(HandleExcel):
             slave_list.append([slave_ip, slave_username, slave_password])
         return master_ip, slave_list
 
+    def pt_user_info(self):
+        pt_sheet = self.workbook.sheet_by_name('UserInfo')
+        nrows = pt_sheet.nrows
+        user_infos = []
+        for i in range(1, nrows):
+            username = pt_sheet.cell_value(i, 0)
+            password = pt_sheet.cell_value(i, 1)
+            user_infos.append([username, password])
+        return user_infos
+
     def testcase_list(self):
         pass
 
