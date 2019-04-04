@@ -1,3 +1,0 @@
-[console_scripts]
-apirun = apirun.main:main
-

@@ -15,6 +15,17 @@ urllib3.disable_warnings()
 user_infos = {USERINFO}
 
 
+def is_num(any_param):
+    if isinstance(any_param, int):
+        return any_param
+    else:
+        try:
+            num = int(any_param)
+            return num
+        except ValueError:
+            return False
+
+
 def get_token(url, body, locate):
     try:
         response = requests.post(url=url, json=body, verify=False)
@@ -27,16 +38,14 @@ def get_token(url, body, locate):
             return token
         elif l[0].lower() == 'json':
             rep = response.json()
-            section = l[1].strip().split('.')
-            t_index = None
-            if section[-1].endswith(']'):
-                t_index = section[-1][-2]
-                section[-1] = section[-1][:-3]
             token = rep
-            for x in section:
-                token = token[x]
-            if t_index:
-                token = token[int(t_index)]
+            section = l[1].strip().split('.')
+            for sec in section:
+                sn = is_num(sec)
+                if sn:
+                    token = token[sn]
+                else:
+                    token = token[sec]
             return token
     except KeyError:
         logging.error('Please check your auth info, cannot get correct response.')

@@ -2,7 +2,30 @@
 import requests
 
 
+def is_num(any_param):
+    '''
+    Check is number or string, if number, return it
+    :param any_param:
+    :return: int or False
+    '''
+    if isinstance(any_param, int):
+        return any_param
+    else:
+        try:
+            num = int(any_param)
+            return num
+        except ValueError:
+            return False
+
+
 def get_token(url, body, locate):
+    '''
+    Get token
+    :param url:
+    :param body: Request body
+    :param locate: The token location in Header or Json
+    :return: token
+    '''
     response = requests.post(url=url, json=body, verify=False)
     if ':' in locate:
         l = locate.split(':')
@@ -13,14 +36,12 @@ def get_token(url, body, locate):
         return token
     elif l[0].lower() == 'json':
         rep = response.json()
-        section = l[1].strip().split('.')
-        t_index = None
-        if section[-1].endswith(']'):
-            t_index = section[-1][-2]
-            section[-1] = section[-1][:-3]
         token = rep
-        for x in section:
-            token = token[x]
-        if t_index:
-            token = token[int(t_index)]
+        section = l[1].strip().split('.')
+        for sec in section:
+            sn = is_num(sec)
+            if sn:
+                token = token[sn]
+            else:
+                token = token[sec]
         return token
